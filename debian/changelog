@@ -1,5 +1,27 @@
-template-repository (1.0-1) unstable; urgency=medium
+golang-github-rivo-uniseg (0.4.2-1) unstable; urgency=medium
 
-  * Initial release
+  * New upstream release
 
- -- Tsic404 <liuheng@deepin.org>  Sat, 28 Jan 2023 13:46:49 +0800
+ -- Daniel Milde <daniel@milde.cz>  Mon, 03 Oct 2022 22:40:11 +0200
+
+golang-github-rivo-uniseg (0.2.0-1) unstable; urgency=medium
+
+  * New upstream release
+  * reverse dependencies successfully built with ratt:
+    - nothing todo for this package
+
+ -- Thorsten Alteholz <debian@alteholz.de>  Sun, 13 Dec 2020 19:01:53 +0000
+
+golang-github-rivo-uniseg (0.1.0-2) unstable; urgency=medium
+
+  * upload source package
+  * debian/control: add myself to Uploaders:
+  * debian/control: bump standard to 4.5.1 (no changes)
+
+ -- Thorsten Alteholz <debian@alteholz.de>  Sun, 06 Dec 2020 15:38:42 +0000
+
+golang-github-rivo-uniseg (0.1.0-1) unstable; urgency=medium
+
+  * Initial release (Closes: #939047)
+
+ -- Jongmin Kim <jmkim@pukyong.ac.kr>  Sat, 31 Aug 2019 22:56:13 +0900
