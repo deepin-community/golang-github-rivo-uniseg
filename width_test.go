@@ -1,6 +1,8 @@
 package uniseg
 
-import "testing"
+import (
+	"testing"
+)
 
 // widthTestCases is a list of test cases for the calculation of string widths.
 var widthTestCases = []struct {
@@ -275,8 +277,8 @@ var widthTestCases = []struct {
 	{"\u00a9\u061c", 1},
 	{"\u00a9\u000a", 1},
 	{"\u00a9\u000d", 1},
-	{"\u00a9\u0300", 2}, // This is really 1 but we can't handle it.
-	{"\u00a9\u200d", 2},
+	{"\u00a9\u0300", 1},
+	{"\u00a9\u200d", 1},
 	{"\u00a9a", 2},
 	{"\u00a9\u1b05", 2},
 	{"\u00a9\u2985", 2},
@@ -327,6 +329,7 @@ var widthTestCases = []struct {
 	{"\U0001f3f3\ufe0f\u200d\U0001f308", 2}, // Rainbow flag
 	{"\U0001f1e9\U0001f1ea", 2},             // German flag
 	{"\u0916\u093e", 2},                     // खा (Hindi, "eat")
+	{"\u0915\u0948\u0938\u0947", 2},         // कैसे (Hindi, "how")
 	{"\U0001f468\u200d\U0001f469\u200d\U0001f467\u200d\U0001f466", 2}, // Family: Man, Woman, Girl, Boy
 	{"\u1112\u116f\u11b6", 2},                   // 훯 (Hangul, conjoining Jamo, "h+weo+lh")
 	{"\ud6ef", 2},                               // 훯 (Hangul, precomposed, "h+weo+lh")
@@ -338,7 +341,7 @@ var widthTestCases = []struct {
 	{"\u263a\ufe0f", 2},                         // White smiling face (with variation selector 16 = emoji presentation)
 	{"\u231b", 2},                               // Hourglass
 	{"\u231b\ufe0e", 1},                         // Hourglass (with variation selector 15 = text presentation)
-	{"1\ufe0f", 2},                              // Emoji presentation of digit one.
+	{"1\ufe0f", 1},                              // Emoji presentation of digit one.
 }
 
 // String width tests using the StringWidth function.
@@ -356,6 +359,9 @@ func TestWidthGraphemes(t *testing.T) {
 	for index, testCase := range widthTestCases {
 		var actual int
 		graphemes := NewGraphemes(testCase.original)
+		if w := graphemes.Width(); w != 0 {
+			t.Errorf("Expected initial Width to be 0, got %d", w)
+		}
 		for graphemes.Next() {
 			actual += graphemes.Width()
 		}
@@ -394,6 +400,19 @@ func TestWidthGraphemesFunctionString(t *testing.T) {
 		if actual != testCase.expected {
 			t.Errorf("Width of %q is %d, expected %d (test case %d)", testCase.original, actual, testCase.expected, index)
 		}
+		cluster, rest, width, newState := FirstGraphemeClusterInString(text, -1)
+		if len(cluster) > 0 {
+			t.Errorf(`Expected cluster to be empty string, got %q`, cluster)
+		}
+		if len(rest) > 0 {
+			t.Errorf(`Expected rest to be empty string, got %q`, rest)
+		}
+		if width != 0 {
+			t.Errorf(`Expected width to be 0, got %d`, width)
+		}
+		if newState != 0 {
+			t.Errorf(`Expected newState to be 0, got %d`, newState)
+		}
 	}
 }
 
@@ -425,6 +444,53 @@ func TestWidthStepString(t *testing.T) {
 		}
 		if actual != testCase.expected {
 			t.Errorf("Width of %q is %d, expected %d (test case %d)", testCase.original, actual, testCase.expected, index)
+		}
+	}
+}
+
+func TestRunesWidth(t *testing.T) {
+	tc := []struct {
+		name  string
+		raw   string
+		width int
+	}{
+		{"latin    ", "long", 4},
+		{"chinese  ", "中国", 4},
+		{"combining", "shangha\u0308\u0308i", 8},
+		{
+			"emoji 1", "🏝",
+			1,
+		},
+		{
+			"emoji 2", "🗻",
+			2,
+		},
+		{
+			"emoji 3", "🏖",
+			1,
+		},
+		{
+			"flags", "🇳🇱🇧🇷i",
+			5,
+		},
+		{
+			"flag 2", "🇨🇳",
+			2,
+		},
+	}
+
+	for _, v := range tc {
+		graphemes := NewGraphemes(v.raw)
+		width := 0
+		var rs []rune
+		for graphemes.Next() {
+			rs = graphemes.Runes()
+			width += StringWidth(string(rs))
+		}
+
+		if v.width != width {
+			t.Logf("%s :\t %q %U\n", v.name, v.raw, rs)
+			t.Errorf("%s:\t %q  expect width %d, got %d\n", v.name, v.raw, v.width, width)
 		}
 	}
 }

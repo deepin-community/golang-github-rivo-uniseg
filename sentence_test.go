@@ -63,6 +63,16 @@ func TestSentenceCasesBytes(t *testing.T) {
 				len(testCase.expected))
 		}
 	}
+	sentence, rest, newState := FirstSentence([]byte{}, -1)
+	if len(sentence) > 0 {
+		t.Errorf(`Expected sentence to be empty byte slice, got %q`, sentence)
+	}
+	if len(rest) > 0 {
+		t.Errorf(`Expected rest to be empty byte slice, got %q`, rest)
+	}
+	if newState != 0 {
+		t.Errorf(`Expected newState to be 0, got %d`, newState)
+	}
 }
 
 // Test all official Unicode test cases for sentence boundaries using the string
@@ -124,14 +134,24 @@ func TestSentenceCasesString(t *testing.T) {
 				len(testCase.expected))
 		}
 	}
+	sentence, rest, newState := FirstSentenceInString("", -1)
+	if len(sentence) > 0 {
+		t.Errorf(`Expected sentence to be empty string, got %q`, sentence)
+	}
+	if len(rest) > 0 {
+		t.Errorf(`Expected rest to be empty string, got %q`, rest)
+	}
+	if newState != 0 {
+		t.Errorf(`Expected newState to be 0, got %d`, newState)
+	}
 }
 
 // Benchmark the use of the sentence break function for byte slices.
 func BenchmarkSentenceFunctionBytes(b *testing.B) {
-	str := []byte(benchmarkStr)
 	for i := 0; i < b.N; i++ {
 		var c []byte
 		state := -1
+		str := benchmarkBytes
 		for len(str) > 0 {
 			c, str, state = FirstSentence(str, state)
 			resultRunes = []rune(string(c))
@@ -141,10 +161,10 @@ func BenchmarkSentenceFunctionBytes(b *testing.B) {
 
 // Benchmark the use of the sentence break function for strings.
 func BenchmarkSentenceFunctionString(b *testing.B) {
-	str := benchmarkStr
 	for i := 0; i < b.N; i++ {
 		var c string
 		state := -1
+		str := benchmarkStr
 		for len(str) > 0 {
 			c, str, state = FirstSentenceInString(str, state)
 			resultRunes = []rune(c)

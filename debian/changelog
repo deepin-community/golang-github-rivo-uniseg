@@ -1,3 +1,26 @@
+golang-github-rivo-uniseg (0.4.7-1) unstable; urgency=medium
+
+  [ Helmut Grohne ]
+  * Mark golang-github-rivo-uniseg-dev Multi-Arch: foreign. (Closes: #1069028)
+
+  [ Anthony Fok ]
+  * New upstream version 0.4.7 (Closes: #1065021)
+  * Bump Standards-Version to 4.7.0 (no change)
+  * Bump build-dependency golang-any (>= 2:1.18~) as per go.mod
+  * Add myself to the list of Uploaders
+
+ -- Anthony Fok <foka@debian.org>  Sun, 21 Apr 2024 21:15:21 -0600
+
+golang-github-rivo-uniseg (0.4.4-1) unstable; urgency=medium
+
+  * Team upload.
+  * New upstream version 0.4.4
+  * Simplify and correct debian/gbp.conf
+  * Use dh-sequence-golang instead of dh-golang and --with=golang
+  * Bump Standards-Version to 4.6.2 (no change)
+
+ -- Anthony Fok <foka@debian.org>  Sun, 15 Oct 2023 01:55:47 -0600
+
 golang-github-rivo-uniseg (0.4.2-1) unstable; urgency=medium
 
   * New upstream release
