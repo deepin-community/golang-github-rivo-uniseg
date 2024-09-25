@@ -6,6 +6,8 @@ import (
 
 const benchmarkStr = "This is 🏳️‍🌈, a test string ツ for grapheme cluster testing. 🏋🏽‍♀️🙂🙂 It's only relevant for benchmark tests."
 
+var benchmarkBytes = []byte(benchmarkStr)
+
 // Variables to avoid compiler optimizations.
 var resultRunes []rune
 
@@ -38,6 +40,7 @@ var testCases = []testCase{
 	{original: "🏳️‍🌈", expected: [][]rune{{0x1f3f3, 0xfe0f, 0x200d, 0x1f308}}},
 	{original: "\t🏳️‍🌈", expected: [][]rune{{0x9}, {0x1f3f3, 0xfe0f, 0x200d, 0x1f308}}},
 	{original: "\t🏳️‍🌈\t", expected: [][]rune{{0x9}, {0x1f3f3, 0xfe0f, 0x200d, 0x1f308}, {0x9}}},
+	{original: "\r\n\uFE0E", expected: [][]rune{{13, 10}, {0xfe0e}}},
 }
 
 // decomposed returns a grapheme cluster decomposition.
@@ -126,6 +129,9 @@ func TestGraphemesClassWord(t *testing.T) {
 			index   int
 			cluster []rune
 		)
+		if !gr.IsWordBoundary() {
+			t.Error("Expected initial IsWordBoundary to be true, got false")
+		}
 	GraphemeLoop:
 		for gr.Next() {
 			if index >= len(testCase.expected) {
@@ -188,6 +194,9 @@ func TestGraphemesClassSentence(t *testing.T) {
 			index   int
 			cluster []rune
 		)
+		if !gr.IsSentenceBoundary() {
+			t.Error("Expected initial IsSentenceBoundary to be true, got false")
+		}
 	GraphemeLoop:
 		for gr.Next() {
 			if index >= len(testCase.expected) {
@@ -336,6 +345,30 @@ func TestGraphemesCount(t *testing.T) {
 	}
 }
 
+// Test the ReverseString function.
+func TestReverseString(t *testing.T) {
+	for _, testCase := range testCases {
+		var r []rune
+		for index := len(testCase.expected) - 1; index >= 0; index-- {
+			r = append(r, testCase.expected[index]...)
+		}
+		if string(r) != ReverseString(testCase.original) {
+			t.Errorf(`Exepected reverse of %q to be %q, got %q`, testCase.original, string(r), ReverseString(testCase.original))
+		}
+	}
+
+	// Three additional ones, for good measure.
+	if ReverseString("🇩🇪🏳️‍🌈") != "🏳️‍🌈🇩🇪" {
+		t.Error("Flags weren't reversed correctly")
+	}
+	if ReverseString("🏳️‍🌈") != "🏳️‍🌈" {
+		t.Error("Flag wasn't reversed correctly")
+	}
+	if ReverseString("") != "" {
+		t.Error("Empty string wasn't reversed correctly")
+	}
+}
+
 // Run all lists of test cases using the Graphemes function for byte slices.
 func TestGraphemesFunctionBytes(t *testing.T) {
 	allCases := append(testCases, graphemeBreakTestCases...)
@@ -397,6 +430,19 @@ func TestGraphemesFunctionBytes(t *testing.T) {
 				index,
 				len(testCase.expected))
 		}
+	}
+	cluster, rest, width, newState := FirstGraphemeCluster([]byte{}, 0)
+	if len(cluster) > 0 {
+		t.Errorf(`Expected cluster to be empty byte slice, got %q`, cluster)
+	}
+	if len(rest) > 0 {
+		t.Errorf(`Expected rest to be empty byte slice, got %q`, rest)
+	}
+	if width != 0 {
+		t.Errorf(`Expected width to be 0, got %d`, width)
+	}
+	if newState != 0 {
+		t.Errorf(`Expected newState to be 0, got %d`, newState)
 	}
 }
 
@@ -476,10 +522,10 @@ func BenchmarkGraphemesClass(b *testing.B) {
 
 // Benchmark the use of the Graphemes function for byte slices.
 func BenchmarkGraphemesFunctionBytes(b *testing.B) {
-	str := []byte(benchmarkStr)
 	for i := 0; i < b.N; i++ {
 		var c []byte
 		state := -1
+		str := benchmarkBytes
 		for len(str) > 0 {
 			c, str, _, state = FirstGraphemeCluster(str, state)
 			resultRunes = []rune(string(c))
@@ -489,10 +535,10 @@ func BenchmarkGraphemesFunctionBytes(b *testing.B) {
 
 // Benchmark the use of the Graphemes function for strings.
 func BenchmarkGraphemesFunctionString(b *testing.B) {
-	str := benchmarkStr
 	for i := 0; i < b.N; i++ {
 		var c string
 		state := -1
+		str := benchmarkStr
 		for len(str) > 0 {
 			c, str, _, state = FirstGraphemeClusterInString(str, state)
 			resultRunes = []rune(c)
